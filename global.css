@@ -1,0 +1,3935 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   DESIGN TOKENS
+   - Paleta de marca (verde lima de Grupo Randazzo) separada de
+     los colores semánticos (éxito/alerta/error/info), que se
+     mantienen convencionales para que la UI siga siendo legible.
+   - Los tokens de "KPI" (--green/--amber/--red/--blue, --surface,
+     --border, --r, --shadow, --text-2) quedan con los MISMOS
+     valores que tenían antes en modo claro, para no alterar el
+     dashboard actual.
+   ============================================================ */
+:root {
+  color-scheme: light;
+
+  /* Marca — extraído del isologo de Grupo Randazzo */
+  --brand: #d9ff50;
+  --brand-hover: #c7ec3f;
+  --brand-ink: #14170a; /* texto oscuro para usar sobre fondo lima */
+  --brand-dim: rgba(217, 255, 80, 0.14);
+
+  /* Navy — tono del fondo del logo, usado en sidebar/login */
+  --navy: #0d0d0d;
+  --navy-2: #161616;
+  --navy-hover: #1e1e1e;
+
+  /* Semánticos (sin tocar valores del dashboard) */
+  --green: #00a651;
+  --amber: #d97706;
+  --red: #dc2626;
+  --blue: #2563eb;
+
+  /* Superficies y texto — modo claro */
+  --bg: #f0f2f7;
+  --surface: #ffffff;
+  --surface-2: #f8f9fb;
+  --border: #e2e5ec;
+  --text: #0f172a;
+  --text-2: #64748b;
+
+  /* El lima de la marca usado COMO TEXTO o línea: más oscuro para que se lea sobre fondo claro */
+  --brand-fg: #586300;
+  --brand-soft: rgba(217, 255, 80, 0.22);
+  --text-red: #b91c1c;
+  --text-amber: #b45309;
+  --text-green: #047857;
+
+  /* Motivos de las multas de logística (gráfico apilado) */
+  --us-m0: #d5e14d;
+  --us-m1: #9ca3af;
+  --us-m2: #8a9a1a;
+  --us-m3: #e5e7eb;
+  --us-m4: #4b5563;
+  --us-m5: #6b7280;
+
+  --r: 8px;
+  --r-lg: 12px;
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.07), 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+
+
+/* Modo oscuro (botón del topbar): negro puro, contorno plano de 1 px en lugar de sombras difusas y el lima del logo */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #0c0c0c;
+  --surface-2: #151515;
+  --border: #262626;
+  --text: #f2f2f2;
+  --text-2: #a1a1a1;
+  --navy: #000000;
+  --navy-2: #050505;
+  --navy-hover: #161616;
+
+  /* Marca: el tono del logo, que no satura la vista sobre negro */
+  --brand: #d5e14d;
+  --brand-hover: #c3cf3f;
+  --brand-ink: #000000;
+  --brand-dim: rgba(213, 225, 77, 0.14);
+  --brand-soft: rgba(213, 225, 77, 0.08); /* alertas y estados activos: neón tenue */
+  --brand-fg: #d5e14d;
+
+  --text-red: #f87171;
+  --text-amber: #fbbf24;
+  --text-green: #34d399;
+
+  --shadow: 0 0 0 1px #1c1c1c;
+  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.8);
+
+  --us-m0: #d5e14d;
+  --us-m1: #9ca3af;
+  --us-m2: #8a9a1a;
+  --us-m3: #e5e7eb;
+  --us-m4: #4b5563;
+  --us-m5: #6b7280;
+}
+
+/* Modo claro (botón del topbar) */
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+}
+.shell {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+/* Pantalla de carga inicial (antes de resolver la sesión) */
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--navy);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────
+   Se mantiene siempre en tono navy (identidad de marca), tanto
+   en modo claro como oscuro del resto de la app.
+   ──────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 224px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, var(--navy-2) 0%, var(--navy) 100%);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+.sb-brand {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sb-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(217, 255, 80, 0.25),
+    0 4px 12px rgba(217, 255, 80, 0.15);
+}
+.sb-logo img,
+.login-logo-ico img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.sb-name {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.sb-sub {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  margin-top: 1px;
+}
+
+.sb-pulse {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  animation: pulse 2.2s infinite;
+  flex-shrink: 0;
+}
+.pulse.off {
+  background: #ef4444;
+  animation: none;
+}
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(217, 255, 80, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(217, 255, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(217, 255, 80, 0);
+  }
+}
+.pulse-txt {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+.nav-sec {
+  color: rgba(255, 255, 255, 0.22);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  padding: 16px 20px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+}
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+}
+.nav-item.active {
+  background: var(--brand-dim);
+  border-left-color: var(--brand);
+  color: #fff;
+  font-weight: 600;
+}
+.nav-badge {
+  margin-left: auto;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.sb-user {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-ink);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.user-name {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.user-role {
+  color: rgba(255, 255, 255, 0.32);
+  font-size: 10px;
+  margin-top: 1px;
+}
+
+/* ── MAIN ────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.tb-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.tb-date {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 24px;
+}
+
+/* Toggle de tema — listo para usar cuando se agregue el botón en el topbar */
+.theme-toggle {
+  margin-left: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.12s;
+}
+.theme-toggle:hover {
+  border-color: var(--brand);
+  color: var(--text);
+}
+
+/* ── CARDS ───────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.card-head {
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.card-body {
+  padding: 18px;
+}
+
+/* ── KPIs — SIN MODIFICAR (se rediseñan aparte, junto al dashboard) ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.kpi {
+  background: var(--surface);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--border);
+}
+.kpi.green {
+  border-left-color: var(--green);
+  background: rgba(0, 166, 81, 0.04);
+}
+.kpi.amber {
+  border-left-color: var(--amber);
+  background: rgba(215, 119, 6, 0.04);
+}
+.kpi.red {
+  border-left-color: var(--red);
+  background: rgba(220, 38, 38, 0.04);
+}
+.kpi.blue {
+  border-left-color: var(--blue);
+  background: rgba(37, 99, 235, 0.04);
+}
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.kpi-val {
+  font-size: 30px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.kpi-sub {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 3px;
+}
+
+/* ── PAGE HEADER ─────────────────────────────────────────── */
+.ph {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+}
+.ph h1 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+.ph p {
+  color: var(--text-2);
+  font-size: 13px;
+  margin-top: 3px;
+}
+.ph-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: color-mix(in srgb, var(--border) 60%, var(--text-2));
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--brand);
+  color: var(--brand-ink);
+  border-color: var(--brand);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border-color: transparent;
+}
+.btn-danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.fw {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── FORMS ───────────────────────────────────────────────── */
+.fg {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.fg label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.fg input,
+.fg select {
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  width: 100%;
+}
+.fg input::placeholder {
+  color: var(--text-2);
+  opacity: 0.7;
+}
+.fg input:focus,
+.fg select:focus {
+  border-color: var(--brand-hover);
+  box-shadow: 0 0 0 3px var(--brand-dim);
+}
+.help {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 3px;
+}
+
+/* ── UPLOAD AREA ─────────────────────────────────────────── */
+.upload-area {
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-lg);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-2);
+  font-size: 13px;
+  background: var(--surface-2);
+}
+.upload-area:hover {
+  background: var(--brand-dim);
+  border-color: var(--brand-hover);
+  color: var(--text);
+}
+.upload-area.done {
+  border-color: var(--brand-hover);
+  background: var(--brand-dim);
+  color: var(--text);
+  border-style: solid;
+}
+.upload-ico {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.upload-txt {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.upload-sub {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+/* ── GRIDS / TABLE ───────────────────────────────────────── */
+.g2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.g3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+.tw {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+th {
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface-2);
+  white-space: nowrap;
+}
+td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--text);
+}
+tr:last-child td {
+  border-bottom: none;
+}
+tbody tr:hover td {
+  background: var(--surface-2);
+}
+
+/* ── BADGES ──────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.b-green {
+  background: #dcfce7;
+  color: #15803d;
+}
+.b-amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+.b-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.b-blue {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.b-gray {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+/* Ajuste de badges en modo oscuro para que no queden fosforescentes */
+
+[data-theme='dark'] .b-green {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+}
+[data-theme='dark'] .b-amber {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+}
+[data-theme='dark'] .b-red {
+  background: rgba(239, 68, 68, 0.16);
+  color: #f87171;
+}
+[data-theme='dark'] .b-blue {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60a5fa;
+}
+[data-theme='dark'] .b-gray {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+}
+
+/* ── UTILS ───────────────────────────────────────────────── */
+.ml-auto {
+  margin-left: auto;
+}
+.mt-4 {
+  margin-top: 4px;
+}
+.mt-12 {
+  margin-top: 12px;
+}
+.mt-14 {
+  margin-top: 14px;
+}
+.mb-16 {
+  margin-bottom: 16px;
+}
+.text-xs {
+  font-size: 11px;
+}
+.text-muted {
+  color: var(--text-2);
+}
+
+/* Input de archivo oculto — se dispara con clic en el upload-area asociado */
+.file-input-hidden {
+  display: none;
+}
+
+/* Variantes de .tw con altura máxima + scroll, para paneles de preview */
+.tw-scroll-280 {
+  max-height: 280px;
+  overflow: auto;
+}
+.tw-scroll-320 {
+  max-height: 320px;
+  overflow: auto;
+}
+
+/* Footer de tabla tipo "+ N registros más" */
+.tw-more {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.ml-8 {
+  margin-left: 8px;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.center-x {
+  margin: 0 auto;
+}
+.flex-gap-6 {
+  display: flex;
+  gap: 6px;
+}
+.text-muted-xs {
+  color: var(--text-2);
+  font-size: 11px;
+}
+
+/* Nota/aclaración chica debajo de un alert (ej: "· N marcadas como pagadas") */
+.alert-subnote {
+  display: block;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* Panel de tip/nota informativa (debajo de un form, fondo sutil) */
+.info-note {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+/* Grid de 4 KPIs en una fila (variante puntual del kpi-grid del dashboard) */
+.kpi-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.kpi-val-sm {
+  font-size: 16px;
+}
+
+/* Input de búsqueda chico embebido en un card-head */
+.card-head-search {
+  margin-left: auto;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  width: 160px;
+  color: var(--text);
+  background: var(--surface);
+}
+
+/* Fila de tabla "apagada" (ej: infracción ya pagada) */
+.row-paid {
+  opacity: 0.6;
+}
+
+/* Celdas de texto truncado con elipsis, en anchos puntuales */
+.td-truncate-120 {
+  font-size: 11px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.td-truncate-130 {
+  font-size: 11px;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Estados de "días para el vencimiento" */
+.vcto-urgent {
+  color: var(--red);
+}
+.vcto-warn {
+  color: var(--amber);
+  font-weight: 600;
+}
+.vcto-ok {
+  color: var(--green);
+}
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-2);
+}
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: rot 0.65s linear infinite;
+  display: inline-block;
+}
+.spinner-dark {
+  border: 2px solid var(--border);
+  border-top-color: var(--brand-hover);
+}
+@keyframes rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.alert {
+  padding: 11px 14px;
+  border-radius: var(--r);
+  font-size: 13px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+  border: 1px solid transparent;
+}
+.alert-ok {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+.alert-err {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #881337;
+}
+.alert-warn {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #78350f;
+}
+.alert-info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e3a8a;
+}
+
+[data-theme='dark'] .alert-ok {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: #86efac;
+}
+[data-theme='dark'] .alert-err {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+[data-theme='dark'] .alert-warn {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #fcd34d;
+}
+[data-theme='dark'] .alert-info {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #93c5fd;
+}
+
+/* ── LOGIN ───────────────────────────────────────────────────
+   FIX: #root tiene display:flex, lo que convertía a .login-wrap
+   en un flex-item que se achicaba a su contenido (por eso quedaba
+   pegado a la izquierda). Con width:100% vuelve a ocupar todo el
+   ancho disponible y el centrado interno funciona.
+   ──────────────────────────────────────────────────────────── */
+.login-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(217, 255, 80, 0.06),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(217, 255, 80, 0.05),
+      transparent 40%
+    ),
+    var(--navy);
+}
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  padding: 40px;
+  width: 360px;
+}
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.login-logo-ico {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 0 0 1px rgba(217, 255, 80, 0.25),
+    0 6px 16px rgba(217, 255, 80, 0.18);
+}
+.login-logo-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.login-logo-sub {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 1px;
+}
+.login-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.area-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.area-btn {
+  padding: 10px;
+  border-radius: var(--r);
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  text-align: center;
+  transition: all 0.12s;
+}
+.area-btn:hover:not(.disabled) {
+  border-color: var(--brand-hover);
+  background: var(--brand-dim);
+}
+.area-btn.active {
+  background: var(--brand);
+  color: var(--brand-ink);
+  border-color: var(--brand);
+}
+.area-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.area-btn-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+.area-btn-sub {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+.login-err {
+  font-size: 12px;
+  color: var(--red);
+  margin-top: 8px;
+  min-height: 18px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGOS — módulo de pagos e imputaciones
+   ══════════════════════════════════════════════════════════════ */
+
+/* Instructivo colapsable */
+.pagos-instructivo {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.pagos-instructivo-header {
+  padding: 10px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  font-size: 13px;
+  font-weight: 600;
+  user-select: none;
+  color: var(--text);
+}
+.pagos-instructivo-toggle {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.pagos-instructivo-body {
+  padding: 16px 20px;
+  font-size: 13px;
+  line-height: 1.7;
+  background: var(--surface);
+}
+.pagos-instructivo-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+.pagos-instructivo-col-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--green);
+}
+.pagos-instructivo-col-title.alt {
+  color: var(--blue);
+}
+.pagos-instructivo-list {
+  padding-left: 16px;
+  color: var(--text-2);
+}
+.pagos-instructivo-list li {
+  margin-bottom: 4px;
+}
+.pagos-tip {
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* Pestañas de modo (Excel / Manual) */
+.pagos-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Sección de carga Excel */
+.pagos-upload-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.pagos-upload-info {
+  padding: 14px;
+  background: var(--surface-2);
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: space-between;
+}
+.pagos-upload-info-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+.pagos-upload-info-text {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.7;
+  flex: 1;
+}
+
+/* Badge "Formato Celer detectado" */
+.pagos-celer-badge {
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--r);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.pagos-celer-badge-ico {
+  font-size: 20px;
+}
+.pagos-celer-badge-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #15803d;
+}
+.pagos-celer-badge-sub {
+  font-size: 12px;
+  color: #166534;
+}
+
+/* Panel de vista previa */
+.pagos-preview {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface-2);
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+}
+.pagos-preview-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.pagos-preview-counters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.pagos-counter {
+  flex: 1;
+  min-width: 120px;
+  border-radius: var(--r);
+  padding: 10px 14px;
+}
+.pagos-counter.ok {
+  background: #dcfce7;
+}
+.pagos-counter.purple {
+  background: #ede9fe;
+}
+.pagos-counter.err {
+  background: #fee2e2;
+}
+.pagos-counter-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+.pagos-counter.ok .pagos-counter-label {
+  color: #15803d;
+}
+.pagos-counter.purple .pagos-counter-label {
+  color: #5b21b6;
+}
+.pagos-counter.err .pagos-counter-label {
+  color: #991b1b;
+}
+.pagos-counter-val {
+  font-size: 24px;
+  font-weight: 700;
+}
+.pagos-counter.ok .pagos-counter-val {
+  color: #15803d;
+}
+.pagos-counter.purple .pagos-counter-val {
+  color: #5b21b6;
+}
+.pagos-counter.err .pagos-counter-val {
+  color: #991b1b;
+}
+.pagos-counter-sub {
+  font-size: 11px;
+  word-break: break-all;
+}
+.pagos-counter.ok .pagos-counter-sub {
+  color: #15803d;
+}
+.pagos-counter.purple .pagos-counter-sub {
+  color: #5b21b6;
+}
+.pagos-counter.err .pagos-counter-sub {
+  color: #991b1b;
+}
+.pagos-preview-table {
+  margin-bottom: 12px;
+  max-height: 200px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+.pagos-preview-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Historial resumen de totales */
+.pagos-historial-resumen {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.pagos-historial-col-label {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-bottom: 2px;
+}
+.pagos-historial-col-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.pagos-historial-col-val.green {
+  color: var(--green);
+}
+
+/* Diferencia de montos (descuento / recargo) */
+.diff-pos {
+  font-weight: 600;
+  color: var(--green);
+}
+.diff-neg {
+  font-weight: 600;
+  color: var(--red);
+}
+.diff-label {
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+/* Modo manual */
+.pagos-manual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.pagos-textarea {
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: 12px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  resize: vertical;
+  width: 100%;
+  outline: none;
+  color: var(--text);
+  background: var(--surface);
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.pagos-textarea:focus {
+  border-color: var(--brand-hover);
+  box-shadow: 0 0 0 3px var(--brand-dim);
+}
+.pagos-spacer-sm {
+  height: 58px;
+}
+.pagos-full-col {
+  grid-column: span 2;
+}
+
+/* Banner de monto pendiente (también usado en Asignación) */
+.monto-banner {
+  background: var(--navy);
+  color: #fff;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.monto-banner-label {
+  font-size: 11px;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.monto-banner-val {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.monto-banner-right {
+  text-align: right;
+}
+.monto-banner-sub {
+  font-size: 11px;
+  opacity: 0.6;
+}
+.monto-banner-warn {
+  font-size: 12px;
+  color: #fbbf24;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   VISOR DE FOTOS — modal y thumbnails de infracciones
+   ══════════════════════════════════════════════════════════════ */
+
+/* Thumbnails en tabla */
+.foto-thumb-wrap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.foto-thumb {
+  width: 56px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: zoom-in;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  transition: transform 0.12s, border-color 0.12s;
+}
+.foto-thumb:hover {
+  transform: scale(1.06);
+  border-color: var(--brand-hover);
+}
+.foto-thumb-broken {
+  width: 56px;
+  height: 40px;
+  border-radius: 4px;
+  border: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Modal overlay */
+.foto-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+.foto-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+.foto-modal-img {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 8px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  display: block;
+}
+.foto-modal-close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.foto-modal-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+.foto-modal-nav:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+.foto-modal-nav.prev {
+  left: -48px;
+}
+.foto-modal-nav.next {
+  right: -48px;
+}
+.foto-modal-label {
+  position: absolute;
+  bottom: -32px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+.foto-modal-error {
+  padding: 32px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 13px;
+  min-width: 300px;
+}
+.foto-modal-error a {
+  color: var(--blue);
+  margin-top: 12px;
+  display: block;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BARRA DE PROGRESO PDF — módulo de asignación
+   ══════════════════════════════════════════════════════════════ */
+.pdf-progress {
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+.pdf-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--text);
+}
+.pdf-progress-track {
+  width: 100%;
+  height: 6px;
+  background: var(--bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.pdf-progress-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 3px;
+  transition: width 0.6s ease-out;
+}
+
+/* Filtros avanzados */
+.filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.filtros-grid input,
+.filtros-grid select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  color: var(--text);
+  background: var(--surface);
+  width: 100%;
+}
+.filtros-grid input:focus,
+.filtros-grid select:focus {
+  border-color: var(--brand-hover);
+}
+.filtro-date-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.filtro-date-wrap span {
+  font-size: 11px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.filtro-date-wrap input {
+  flex: 1;
+}
+
+/* Botones PDF en el header (estilo diferenciado del resto) */
+.btn-pdf {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+.btn-pdf:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.06);
+}
+.btn-sep {
+  border-left: 1px solid var(--border);
+  margin-left: 8px;
+  padding-left: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+/* Chip de filtro rápido */
+.chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text-2);
+  transition: all 0.12s;
+}
+
+/* Gestión PDF — celda de tabla */
+.pdf-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+}
+.pdf-link {
+  font-size: 11px;
+  text-decoration: underline;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════
+   CARGA DE PDFs (GeoPage — Flujo 1 y Flujo 2)
+   ══════════════════════════════════════════════════ */
+
+/* Botón de icono circular — pencil, check, etc. (reemplaza estilos sueltos) */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+.icon-btn:hover {
+  background: var(--surface-2);
+}
+.icon-btn-outline {
+  width: auto;
+  height: auto;
+  min-width: 26px;
+  min-height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+}
+.icon-btn-outline:hover {
+  background: var(--surface-2);
+  border-color: var(--text-2);
+}
+
+/* Adjuntar PDF — carga individual (Flujo 1) */
+.pdf-attach-single {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 12px;
+}
+.pdf-attach-single input[type='file'] {
+  font-size: 11px;
+}
+.pdf-attach-status {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.pdf-attach-status.ok {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* Badge de match de PDF en la vista previa de lote (Flujo 2) */
+.badge-pdf-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #15803d;
+}
+.badge-pdf-missing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Spinner inline chico (subiendo PDF) */
+.subiendo-pdf-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════
+   UTILIDADES — extraídas de estilos inline (GeoPage)
+   ══════════════════════════════════════════════════ */
+
+.mb-10 { margin-bottom: 10px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-24 { margin-bottom: 24px; }
+.mt-16 { margin-top: 16px; }
+.mt-6  { margin-top: 6px; }
+
+.col-span-all {
+  grid-column: 1 / -1;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+.divider-h {
+  border-top: 1px solid var(--border);
+  margin: 20px 0;
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.monto-highlight {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.btn-center {
+  justify-content: center;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.hint-text {
+  font-size: 10px;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+
+.report-section {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.report-section:last-child {
+  border-bottom: none;
+}
+
+.report-footer {
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--text-2);
+  border-top: 1px solid var(--border);
+}
+
+/* <details>/<summary> usados como acordeones de reporte */
+.details-summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+.details-summary.muted { color: var(--text-2); }
+.details-summary.amber { color: #b45309; }
+.details-summary.danger { color: var(--red); }
+
+/* Modal chico centrado (editar cupón, confirmaciones) */
+.modal-card-sm {
+  width: 360px;
+  margin: auto;
+  background: var(--surface);
+  z-index: 10000;
+}
+
+/* Banner informativo de escaneo (GeoPage) */
+.scan-info-banner {
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+.scan-info-banner.warn {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+}
+.scan-info-banner.ok {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+}
+.scan-info-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.scan-info-title.warn { color: #92400e; }
+.scan-info-title.ok { color: #15803d; }
+.scan-info-body {
+  font-size: 12px;
+  color: #374151;
+  line-height: 1.7;
+}
+
+.flex-col-gap-10 {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.flex-wrap-gap-8 {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ml-6 {
+  margin-left: 6px;
+}
+
+/* Modificadores de color para .icon-btn (según contexto dinámico) */
+.icon-btn-blue {
+  color: var(--blue);
+}
+.icon-btn-muted {
+  color: var(--text-2);
+}
+.icon-btn-size-15 {
+  font-size: 15px;
+}
+
+/* ══════════════════════════════════════════════════
+   MODAL GENÉRICO (overlay + caja centrada)
+   ══════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-box {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.modal-box-sm {
+  max-width: 400px;
+}
+.modal-title {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.modal-body-text {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.modal-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+}
+.btn-flex-center {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ══════════════════════════════════════════════════
+   MODAL DE ACCIONES (botones apilados a ancho completo)
+   Corrige el texto que se salía del botón: .btn tiene
+   white-space: nowrap, acá se permite el salto de línea.
+   ══════════════════════════════════════════════════ */
+.modal-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text-2);
+}
+.modal-actions-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.modal-actions-col .btn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.3;
+}
+.btn-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+.btn-outline-blue {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+.btn-outline-amber {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+.alert-warn-box {
+  padding: 8px 12px;
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #854d0e;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+/* Select compacto de la barra de filtros */
+.filter-select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  width: 150px;
+}
+
+/* Badge: infracción abonada por el cliente */
+.badge-abonada {
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════
+   KPI CARD (Dashboard) — avance de pago de clientes autónomos
+   ══════════════════════════════════════════════════ */
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 18px;
+}
+.kpi-card-title {
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 10px;
+}
+.kpi-big {
+  font-size: 22px;
+  font-weight: 800;
+}
+.kpi-big.purple { color: #7c3aed; }
+.kpi-card-sub {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.kpi-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #e2e5ec;
+  margin-bottom: 8px;
+}
+.kpi-seg.purple { background: #8b5cf6; }
+.kpi-seg.green  { background: var(--green); }
+.kpi-seg.gray   { background: #cbd5e1; }
+.kpi-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.kpi-dot.purple { background: #8b5cf6; }
+.kpi-dot.green  { background: var(--green); }
+.kpi-dot.gray   { background: #cbd5e1; }
+.kpi-empty {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.kpi-warn {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 6px;
+  padding: 6px 8px;
+  line-height: 1.4;
+}
+
+/* ══════════════════════════════════════════════════
+   HOJA CLIENTES — switch y barra de herramientas
+   ══════════════════════════════════════════════════ */
+.toggle-switch {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  border-radius: 9px;
+  border: none;
+  padding: 0;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.toggle-switch.on { background: #8b5cf6; }
+.toggle-switch.on::after { transform: translateX(16px); }
+.toggle-switch:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.aut-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.aut-search {
+  flex: 1;
+  max-width: 320px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+}
+.aut-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--blue);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Campo CUIT editable en la hoja Clientes */
+.cuit-input {
+  width: 150px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surface);
+}
+.cuit-input::placeholder {
+  color: var(--text-2);
+  font-family: inherit;
+}
+.cuit-input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+.cuit-input.err {
+  border-color: var(--red);
+}
+.cuit-error {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--red);
+}
+
+
+/* Tarjeta de clientes autónomos — versión compacta */
+.kpi-headline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-bottom: 8px;
+}
+
+/* Aviso de PDFs sin acta dentro del pie de la vista previa (GeoPage) */
+.pdf-warn {
+  margin-top: 6px;
+  color: #92400e;
+  line-height: 1.4;
+}
+
+/* Dashboard: en cada tarjeta KPI el título queda arriba (todos a la misma altura) y el
+   contenido se centra en el espacio que sobra, sin dejar un bloque en blanco abajo. */
+.kpi-top {
+  display: flex;
+  flex-direction: column;
+}
+.kpi-top > :nth-child(2) {
+  margin-top: auto;
+}
+.kpi-top > :last-child {
+  margin-bottom: auto;
+}
+
+/* Tarjeta de clientes autónomos: una línea por concepto, con % y monto */
+.kpi-legend {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.kpi-legend li {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+.kpi-legend em {
+  font-style: normal;
+  min-width: 40px;
+  text-align: right;
+  color: var(--text);
+  font-weight: 700;
+}
+.kpi-legend b {
+  min-width: 78px;
+  text-align: right;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Panel de control de la importación de Geodefender (GeoPage) */
+.scan-resumen {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+}
+.scan-resumen-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-bottom: 6px;
+  color: #374151;
+}
+.scan-alerta {
+  margin: 4px 0;
+  color: #b45309;
+  font-weight: 600;
+}
+.scan-montos-titulo {
+  margin: 8px 0 4px;
+  color: #374151;
+}
+.scan-montos-wrap {
+  overflow-x: auto;
+}
+.scan-montos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+}
+.scan-montos th,
+.scan-montos td {
+  white-space: nowrap;
+  padding: 3px 6px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.scan-montos th.usado,
+.scan-montos td.usado {
+  background: rgba(37, 99, 235, 0.1);
+  font-weight: 700;
+}
+
+.scan-nota {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #15803d;
+  font-weight: 600;
+}
+
+.scan-linea {
+  margin: 2px 0;
+  color: #374151;
+}
+.scan-opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 4px;
+  color: #374151;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.scan-nota-gris {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.scan-dup {
+  margin: 8px 0 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #1f2937;
+}
+
+/* ══════════════════════════════════════════════════
+   USADOS — pantalla de stock
+   ══════════════════════════════════════════════════ */
+.us-resumen {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  font-size: 12px;
+}
+.us-resumen-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 6px;
+  color: #374151;
+}
+.us-rastreo {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+.us-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* USADOS — pantalla de multas y de Geodefender */
+.us-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.us-chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.us-chip:hover {
+  border-color: var(--text-2);
+}
+.us-chip.on {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+.us-chips-resp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 8px;
+}
+.us-estado {
+  width: 118px;
+  padding: 4px 6px;
+  font-size: 11px;
+}
+
+/* Pantalla de error al verificar el área del usuario */
+.app-error {
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+  padding: 0 24px;
+}
+.app-error-botones {
+  display: flex;
+  gap: 10px;
+}
+
+/* ══════════════════════════════════════════════════
+   USADOS — usa el tema general (claro u oscuro, con el botón del topbar). Lo propio del área va más abajo.
+   ══════════════════════════════════════════════════ */
+.theme-usados {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* USADOS — ajustes de color para el fondo negro (los colores fijos del tema claro no se leen sobre negro) */
+[data-theme='dark'] .theme-usados .us-resumen {
+  border-top-color: var(--border);
+}
+[data-theme='dark'] .theme-usados .us-resumen-grid,
+[data-theme='dark'] .theme-usados .scan-linea,
+[data-theme='dark'] .theme-usados .scan-montos-titulo {
+  color: #d4d4d4;
+}
+[data-theme='dark'] .theme-usados .scan-nota-gris {
+  color: #959595;
+}
+[data-theme='dark'] .theme-usados .scan-alerta {
+  color: #fbbf24;
+}
+[data-theme='dark'] .theme-usados .us-rastreo {
+  background: rgba(217, 255, 80, 0.08);
+  border-color: rgba(217, 255, 80, 0.35);
+  color: var(--brand-fg);
+}
+[data-theme='dark'] .theme-usados .us-chip.on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+[data-theme='dark'] .theme-usados .badge-abonada {
+  background: rgba(167, 139, 250, 0.18);
+  color: #c4b5fd;
+}
+
+/* USADOS — rastreo semanal y cronograma de vencimientos */
+.us-semana {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.us-bar {
+  height: 10px;
+  min-width: 160px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.us-bar > div {
+  height: 100%;
+  border-radius: 6px;
+  background: var(--brand);
+}
+.us-bar-rojo > div {
+  background: var(--red);
+}
+.us-bar-gris > div {
+  background: var(--text-2);
+}
+.us-col-barra {
+  width: 40%;
+}
+.us-fila-semana {
+  cursor: pointer;
+}
+.us-fila-dia td {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.us-fila-dia td:first-child {
+  padding-left: 32px;
+}
+.us-flecha {
+  display: inline-block;
+  width: 14px;
+  color: var(--text-2);
+}
+
+/* USADOS — gráficos del Dashboard */
+.us-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.us-svg-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.us-svg-txt {
+  fill: var(--text-2);
+  font-size: 11px;
+  font-family: inherit;
+}
+.us-svg-txt-hoy {
+  fill: var(--brand);
+  font-weight: 700;
+}
+.us-svg-venc {
+  fill: var(--amber);
+}
+.us-svg-pagos {
+  fill: var(--brand);
+}
+.us-svg-hoy {
+  fill: var(--surface-2);
+}
+.us-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.us-c-desc,
+.us-c-pag {
+  background: var(--green);
+}
+.us-c-sinrec,
+.us-c-pen,
+.us-c-venc {
+  background: var(--amber);
+}
+.us-c-rec {
+  background: var(--red);
+}
+.us-c-nd {
+  background: #6b7280;
+}
+.us-c-pagos {
+  background: var(--brand);
+}
+.us-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 12px;
+  color: var(--text);
+}
+.us-leyenda > span {
+  display: inline-flex;
+  align-items: center;
+}
+.us-stack {
+  display: flex;
+  height: 22px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-2);
+  margin: 8px 0;
+}
+.us-stack > div {
+  height: 100%;
+}
+.us-cond {
+  margin-bottom: 18px;
+}
+.us-cond-titulo {
+  font-size: 13px;
+}
+.us-vacio {
+  padding: 14px;
+}
+.us-hbar-fila {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin: 7px 0;
+  font-size: 12px;
+}
+.us-hbar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.us-hbar-track {
+  display: flex;
+  height: 14px;
+  background: var(--surface-2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.us-hbar-track > div {
+  height: 100%;
+}
+.us-hbar-val {
+  text-align: right;
+  font-weight: 600;
+  min-width: 28px;
+}
+.us-bar-kpi {
+  min-width: 0;
+  margin: 8px 0 4px;
+}
+.us-chips-chicos {
+  margin-bottom: 0;
+}
+
+.us-svg-log {
+  fill: var(--red);
+}
+.us-kpis-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin: 6px 0 8px;
+}
+
+/* ══════════════════════════════════════════════════
+   USADOS — colores del logo de Randazzo (negro y lima #d5e14d) y tablero tipo plataforma
+   ══════════════════════════════════════════════════ */
+.theme-usados {
+  --brand: #d5e14d;
+  --brand-hover: #c3cf3f;
+  --brand-ink: #000000;
+  --brand-dim: rgba(213, 225, 77, 0.14);
+}
+.theme-usados .sb-logo {
+  box-shadow: 0 0 0 1px rgba(213, 225, 77, 0.25), 0 4px 12px rgba(213, 225, 77, 0.15);
+}
+.theme-usados .pulse:not(.off) {
+  animation: pulse-usados 2s infinite;
+}
+@keyframes pulse-usados {
+  0% { box-shadow: 0 0 0 0 rgba(213, 225, 77, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(213, 225, 77, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(213, 225, 77, 0); }
+}
+.theme-usados .us-rastreo {
+  background: var(--brand-soft);
+  border-color: rgba(213, 225, 77, 0.45);
+  color: var(--brand-fg);
+}
+
+/* Portada */
+.us-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 28px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: radial-gradient(560px 210px at 0% 0%, rgba(213, 225, 77, 0.2), transparent 70%), var(--surface);
+}
+.us-hero-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-fg);
+}
+.us-hero h1 {
+  margin: 6px 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.us-hero p {
+  max-width: 540px;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.us-hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.us-hero-trust {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.us-hero-trust span::before {
+  content: '●';
+  margin-right: 8px;
+  font-size: 9px;
+  color: var(--brand-fg);
+}
+
+/* Cinta de indicadores */
+.us-ticker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.us-tick {
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.us-tick-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.us-tick-val {
+  margin: 4px 0 2px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.us-tick-delta {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.us-tick.ok { border-top: 2px solid var(--green); }
+.us-tick.ok .us-tick-delta { color: var(--text-green); }
+.us-tick.aviso { border-top: 2px solid var(--amber); }
+.us-tick.aviso .us-tick-delta { color: var(--text-amber); }
+.us-tick.mal { border-top: 2px solid var(--red); }
+.us-tick.mal .us-tick-delta { color: var(--text-red); }
+
+/* Tablero: gráfico + libro de vencimientos */
+.us-terminal {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+.us-terminal > .card {
+  margin-bottom: 0;
+}
+.us-book {
+  font-family: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.us-book-head,
+.us-book-fila,
+.us-book-total {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 48px 104px;
+  gap: 8px;
+  padding: 6px 8px;
+}
+.us-book-head {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+}
+.us-book-lista {
+  max-height: 340px;
+  overflow-y: auto;
+}
+.us-book-fila {
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+.us-book-fila > span {
+  position: relative;
+  z-index: 1;
+}
+.us-book-depth {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(213, 225, 77, 0.14);
+}
+.us-book-vencida .us-book-depth { background: rgba(220, 38, 38, 0.28); }
+.us-book-depth-gris { background: rgba(161, 161, 161, 0.18); }
+.us-book-total {
+  margin-top: 4px;
+  font-weight: 700;
+  border-top: 1px solid var(--text-2);
+}
+.us-book .num,
+.us-mkt .num {
+  text-align: right;
+}
+
+/* Mercados por jurisdicción */
+.us-mkt .us-pos {
+  color: var(--text-green);
+}
+.us-mkt-avance {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.us-mkt-avance .us-bar {
+  min-width: 120px;
+  flex: 1;
+}
+.us-mkt-avance span {
+  min-width: 34px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Seguridad y flujo de trabajo */
+.us-seccion-titulo {
+  margin: 20px 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.us-features,
+.us-pasos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.us-feature,
+.us-paso {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+.us-feature h3,
+.us-paso h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.us-feature p,
+.us-paso p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.us-feature-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 12px;
+  border-radius: 9px;
+  background: var(--brand-dim);
+  color: var(--brand-fg);
+}
+.us-paso {
+  position: relative;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.us-paso:hover {
+  border-color: var(--brand);
+  background: var(--surface-2);
+}
+.us-paso:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  top: 50%;
+  right: -14px;
+  z-index: 1;
+  color: var(--text-2);
+}
+.us-paso-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--brand);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand-ink);
+}
+.us-paso-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-fg);
+}
+
+@media (max-width: 1180px) {
+  .us-ticker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .us-terminal { grid-template-columns: minmax(0, 1fr); }
+  .us-features, .us-pasos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .us-paso:not(:last-child)::after { display: none; }
+}
+
+.us-svg-mensual {
+  max-width: 780px;
+}
+
+.us-arranque .tw {
+  margin: 8px 0;
+}
+
+/* USADOS — enlaces en el lima del logo */
+.theme-usados .link-btn {
+  color: var(--brand-fg);
+  font-weight: 600;
+}
+.theme-usados .link-btn:disabled {
+  color: var(--text-2);
+  opacity: 0.5;
+  cursor: default;
+}
+
+
+/* ══════════════════════════════════════════════════
+   USADOS — relieve de las tarjetas (sombra limpia en modo claro, contorno plano de 1 px en oscuro)
+   ══════════════════════════════════════════════════ */
+.us-tick,
+.us-hero,
+.us-feature,
+.us-paso,
+.us-nivel {
+  box-shadow: var(--shadow);
+}
+
+/* ══════════════════════════════════════════════════
+   USADOS — tablero: calendario priorizado, estado de pago, velocidad de resolución, rezago y motivos
+   ══════════════════════════════════════════════════ */
+.us-columna {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.us-columna > .card {
+  margin-bottom: 0;
+}
+
+/* Calendario de pagos priorizado */
+.us-nivel {
+  --nivel: var(--text-2);
+  --nivel-ink: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--nivel);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: var(--surface);
+}
+.us-nivel-1 { --nivel: var(--red); --nivel-ink: #ffffff; }
+.us-nivel-2 { --nivel: var(--amber); --nivel-ink: #161000; }
+.us-nivel-3 { --nivel: var(--blue); --nivel-ink: #ffffff; }
+.us-nivel-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.us-nivel-n {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--nivel);
+  color: var(--nivel-ink);
+}
+.us-nivel-tit {
+  min-width: 0;
+}
+.us-nivel-tit h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.us-nivel-tit p {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+.us-nivel-tot {
+  margin-left: auto;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+.us-nivel-tot b {
+  font-size: 17px;
+  color: var(--text);
+  margin-right: 3px;
+}
+.us-nivel-tot span {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-weight: 600;
+}
+.us-nivel-vacio {
+  font-size: 12px;
+  color: var(--text-2);
+  padding: 2px;
+}
+.us-prio-tabla {
+  font-size: 12px;
+}
+.us-prio-tabla th,
+.us-prio-tabla td {
+  padding: 6px 6px;
+}
+.us-prio-tabla .td-truncate-130 {
+  max-width: 96px;
+}
+.us-badge-venc {
+  margin-left: 6px;
+}
+.us-nivel-mas {
+  margin-top: 6px;
+}
+.us-neg {
+  color: var(--text-red);
+  font-weight: 700;
+}
+.us-aviso {
+  color: var(--text-amber);
+  font-weight: 700;
+}
+.us-prio-total {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 18px;
+  padding: 10px 4px 0;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* Estado de pago: una barra con lo pagado y lo adeudado */
+.us-pago-bar {
+  display: flex;
+  gap: 2px;
+  height: 38px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.us-pago-ok,
+.us-pago-mal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.us-pago-ok {
+  background: var(--green);
+  color: #04140a;
+}
+.us-pago-mal {
+  background: var(--red);
+  color: #ffffff;
+}
+.us-c-adeuda {
+  background: var(--red);
+}
+.us-pago-lados {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.us-pago-lado > span {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.us-pago-lado > b {
+  display: block;
+  font-size: 26px;
+  line-height: 1.15;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.us-pago-lado > em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+
+/* Velocidad de resolución interna */
+.us-vel-num {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.us-vel-num strong {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.us-vel-num span {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.us-vel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.us-vel-grid > div {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.us-vel-grid b {
+  display: block;
+  font-size: 16px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.us-vel-grid span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+/* Franja de rezago municipal sobre la tabla de jurisdicciones (oscura en los dos temas) */
+.us-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 36px;
+  align-items: center;
+  padding: 20px 24px;
+  background: #050505;
+  color: #f2f2f2;
+  border-bottom: 1px solid #262626;
+}
+.us-strip-main {
+  display: flex;
+  flex-direction: column;
+}
+.us-strip-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a1a1a1;
+}
+.us-strip-main strong {
+  font-size: 56px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #d5e14d;
+  font-variant-numeric: tabular-nums;
+}
+.us-strip-side {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 30px;
+}
+.us-strip-side b {
+  display: block;
+  font-size: 22px;
+  color: #f2f2f2;
+  font-variant-numeric: tabular-nums;
+}
+.us-strip-side span {
+  font-size: 11px;
+  color: #a1a1a1;
+}
+.us-strip p {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+  max-width: 780px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #a1a1a1;
+}
+
+/* Logística: barras apiladas por motivo con leyenda al costado */
+.us-mensual {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 236px;
+  gap: 20px;
+  align-items: center;
+}
+.us-mensual-ley {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 12px;
+}
+.us-mensual-ley li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  color: var(--text);
+}
+.us-mensual-ley .us-dot {
+  margin-right: 0;
+}
+.us-ley-nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.us-ley-valor {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.us-ley-valor em {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-2);
+  margin-left: 6px;
+  font-size: 11px;
+}
+.us-svg-seg.us-m0 { fill: var(--us-m0); }
+.us-svg-seg.us-m1 { fill: var(--us-m1); }
+.us-svg-seg.us-m2 { fill: var(--us-m2); }
+.us-svg-seg.us-m3 { fill: var(--us-m3); }
+.us-svg-seg.us-m4 { fill: var(--us-m4); }
+.us-svg-seg.us-m5 { fill: var(--us-m5); }
+.us-md0 { background: var(--us-m0); }
+.us-md1 { background: var(--us-m1); }
+.us-md2 { background: var(--us-m2); }
+.us-md3 { background: var(--us-m3); }
+.us-md4 { background: var(--us-m4); }
+.us-md5 { background: var(--us-m5); }
+.us-svg-total {
+  font-weight: 700;
+}
+
+@media (max-width: 1000px) {
+  .us-terminal {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .us-mensual {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .us-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Aviso de autos sin categoría (Geodefender) */
+.us-sincat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.us-sincat-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.us-sincat-lista label {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+.us-sincat-lista em {
+  font-style: normal;
+  opacity: 0.85;
+}
+.us-sincat-acciones {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* USADOS — multas: foto en miniatura, visor a pantalla completa y link al acta */
+.us-foto-mini {
+  position: relative;
+  width: 60px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-2);
+  cursor: zoom-in;
+  display: block;
+}
+.us-foto-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.us-foto-mas {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+.us-visor {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.us-visor-caja {
+  max-width: 96vw;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: var(--shadow-lg);
+}
+.us-visor-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text);
+}
+.us-visor-top a {
+  color: var(--brand-fg);
+  font-weight: 600;
+}
+.us-visor-cerrar {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.us-visor-caja img {
+  max-width: 92vw;
+  max-height: 78vh;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #000;
+}
+.us-visor-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.us-acta-link {
+  color: var(--brand-fg);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* USADOS — dashboard: estado de pago arriba, gráficos y detalle plegable */
+.us-fila-estado {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+.us-estado-hero .card-body {
+  padding-top: 14px;
+}
+.us-estado-top {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.us-estado-pct strong {
+  display: block;
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-green);
+  font-variant-numeric: tabular-nums;
+}
+.us-estado-pct span {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.us-estado-cifras {
+  flex: 1;
+  min-width: 260px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.us-temporal,
+.us-graficos-grid > .card {
+  margin-bottom: 0;
+}
+.us-temporal {
+  margin-bottom: 14px;
+}
+.us-chart {
+  width: 100%;
+  color: var(--text-2);
+}
+.us-graficos-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.us-grafico-full {
+  grid-column: 1 / -1;
+}
+.us-detalle-cab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 4px 0 14px;
+}
+.us-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.us-detalle .us-prio,
+.us-detalle .us-mkt-card {
+  margin-bottom: 0;
+}
+.us-tip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.us-tip-tit {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.us-tip .us-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.us-motivo {
+  min-width: 200px;
+  max-width: 320px;
+  white-space: normal;
+  line-height: 1.35;
+  font-size: 12px;
+}
+.us-hitl {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-amber);
+}
+@media (max-width: 1000px) {
+  .us-fila-estado,
+  .us-graficos-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* USADOS — hoja de multas: título y filtros fijos, tabla a toda la hoja con encabezado fijo, orden y agrupación */
+.us-multas-pagina {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  min-height: 520px;
+}
+.us-multas-fijo {
+  flex: none;
+  background: var(--bg);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.us-multas-tabla-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.us-multas-tabla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+.us-multas-tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--surface-2);
+  text-align: left;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.us-th {
+  position: sticky;
+}
+.us-th-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 6px 10px 10px;
+  cursor: pointer;
+}
+.us-th-btn:hover {
+  color: var(--text);
+}
+.us-th-flecha {
+  color: var(--brand-fg);
+}
+.us-th-grupo {
+  margin-left: 4px;
+  color: var(--brand-fg);
+}
+.us-th-menu {
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 0 6px 0 0;
+}
+.us-th-pop {
+  position: absolute;
+  z-index: 10;
+  margin-top: 4px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  text-align: left;
+}
+.us-th-pop button {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.us-th-pop button:hover {
+  background: var(--surface-2);
+}
+.us-multas-tabla tbody td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.us-grupo-fila td {
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.us-multas-pie {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 2px 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.us-hojas {
+  display: flex;
+  gap: 6px;
+}
+.us-botones-cuenta {
+  align-self: center;
+}
+
+
+/* USADOS — colores del logo de Randazzo (lima, negro y grises) en todas las barras */
+.us-c-pag, .us-c-desc { background: #d5e14d; }
+.us-c-pen, .us-c-adeuda { background: #8a9a1a; }
+.us-c-sinrec { background: #9ca3af; }
+.us-c-rec { background: #4b5563; }
+.us-c-nd { background: #6b7280; }
+
+/* USADOS — multas: filtros rápidos y botón de legajos */
+.us-chips-rapidos {
+  align-items: center;
+  margin-top: -2px;
+}
+.us-chips-tit {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-right: 2px;
+}
+.us-btn-legajos {
+  border-color: var(--brand-fg);
+  color: var(--brand-fg);
+  font-weight: 600;
+}
+.us-btn-legajos:disabled {
+  border-color: var(--border);
+  color: var(--text-2);
+}
+
+/* USADOS — dashboard: resumen debajo del plan semanal */
+.us-plan-resumen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.us-plan-resumen > div {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface-2);
+}
+.us-plan-resumen b {
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--text);
+}
+.us-plan-resumen span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.us-plan-resumen .us-plan-alerta {
+  border-color: var(--text-amber);
+}
+@media (max-width: 1000px) {
+  .us-plan-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* USADOS — multas: detalle de qué significa la vista elegida */
+.us-ayuda {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand-fg);
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text);
+  max-height: 230px;
+  overflow-y: auto;
+}
+.us-ayuda p {
+  margin: 4px 0;
+  line-height: 1.4;
+}
+.us-ayuda ul {
+  margin: 2px 0 4px 18px;
+  padding: 0;
+  line-height: 1.4;
+}
+.us-ayuda-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.us-ayuda-datos {
+  color: var(--text-2);
+  font-weight: 600;
+}
+.us-ayuda-reabrir {
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+/* USADOS — dashboard: KPI de actas vencidas (debajo del gráfico) */
+.us-vencidas {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.us-vencidas.hay {
+  border-color: var(--text-red);
+}
+.us-vencidas-cifra {
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+}
+.us-vencidas-cifra b {
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--text);
+}
+.us-vencidas-cifra span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.us-vencidas-label {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.us-vencidas.hay .us-vencidas-label {
+  color: var(--text-red);
+}
+.us-vencidas-txt {
+  flex: 1;
+  min-width: 220px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+/* USADOS — hoja de cobranzas */
+.us-cob-comp {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+.us-cob-comp > div {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.us-cob-comp span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.us-cob-comp b {
+  font-size: 20px;
+  color: var(--text);
+}
+.us-cob-tabla-wrap {
+  max-height: 560px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.us-cob-tabla-wrap .us-multas-tabla thead th {
+  padding: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.us-cob-accion {
+  white-space: nowrap;
+}
+.us-cob-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.us-cob-edit input {
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+.us-cob-edit input[type='number'] {
+  width: 100px;
+}
+.us-btn-vencidas {
+  border-color: var(--text-red);
+  color: var(--text-red);
+  font-weight: 600;
+}
+.us-btn-vencidas:disabled {
+  border-color: var(--border);
+  color: var(--text-2);
+}
+@media (max-width: 700px) {
+  .us-cob-comp {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* USADOS — dashboard: filtros globales y cinta del gráfico de vencimientos */
+.us-filtros {
+  margin-bottom: 14px;
+}
+.us-filtros-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 12px 16px;
+}
+.us-filtros-tit {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+  align-self: center;
+  margin-right: 8px;
+}
+.us-filtros-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.us-filtros-body label span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.us-filtros-body select,
+.us-filtros-body input[type='date'] {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  min-width: 120px;
+}
+.us-temporal-cinta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #0b0c0a, #1f2410);
+  border-radius: 10px 10px 0 0;
+  color: #fff;
+}
+.us-temporal-cinta div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.us-temporal-cinta span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.us-temporal-cinta b {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.us-temporal-cinta b.ok {
+  color: #d5e14d;
+}
+.us-temporal-cinta b.aviso {
+  color: #e8f08a;
+}
+.us-temporal-cinta b.apagado {
+  color: rgba(255, 255, 255, 0.4);
+}
+.us-temporal-cinta small {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+.us-tip-sub {
+  font-size: 11px;
+  opacity: 0.75;
+  padding-left: 14px;
+}
+@media (max-width: 700px) {
+  .us-temporal-cinta {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* USADOS — dashboard: toda la tipografía hereda la del cuerpo de la página (sin monoespaciada) */
+.us-ticker,
+.us-ticker *,
+.us-temporal-cinta,
+.us-temporal-cinta *,
+.us-plan-resumen,
+.us-plan-resumen *,
+.us-vencidas,
+.us-vencidas *,
+.us-prio,
+.us-prio *,
+.us-mkt-card,
+.us-mkt-card * {
+  font-family: inherit;
+}
+/* USADOS — cobranzas: comentario por multa */
+.us-cob-com {
+  min-width: 190px;
+  max-width: 260px;
+  white-space: normal;
+}
+.us-cob-com-txt {
+  font-size: 12px;
+  color: var(--text);
+  word-break: break-word;
+}
+.us-cob-com-vacio {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.us-cob-com textarea,
+.us-cob-edit textarea {
+  width: 100%;
+  min-height: 54px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surface);
+  resize: vertical;
+}
+.us-cob-com-acc {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.us-cob-cliente {
+  font-weight: 700;
+  min-width: 150px;
+  max-width: 220px;
+  white-space: normal;
+}
+
+/* ── Movilis: colores pastel como variables (se adaptan al modo oscuro) ── */
+:root {
+  --pz-yellow-bg: #fef9c3; --pz-yellow-bd: #fde047; --pz-yellow-fg: #854d0e; --pz-yellow-soft: #fefce8; --pz-yellow-ink: #713f12;
+  --pz-amber-bg: #fef3c7;  --pz-amber-fg: #92400e;  --pz-amber-fg2: #b45309;
+  --pz-green-bg: #dcfce7;  --pz-green-soft: #f0fdf4; --pz-green-bd: #86efac; --pz-green-fg: #15803d; --pz-green-chip: #16a34a;
+  --pz-red-bg: #fee2e2;    --pz-red-fg: #991b1b;    --pz-red-chip: #dc2626;
+  --pz-rose-bg: #fff1f2;   --pz-rose-bd: #fecdd3;   --pz-rose-fg: #9f1239;
+  --pz-blue-bg: #eff6ff;   --pz-blue-bd: #bfdbfe;   --pz-blue-fg: #1d4ed8; --pz-blue-chip: #3b82f6;
+  --pz-gray-bg: #f3f4f6;   --pz-gray-fg: #4b5563;   --pz-gray-mute: #9ca3af;
+  --pz-body: #374151;
+  --pz-violet-bg: #ede9fe; --pz-violet-fg: #7c3aed;
+  --pz-teal-bg: #ccfbf1;   --pz-teal-fg: #0f766e;
+  --pz-sky-bg: #e0f2fe;    --pz-sky-fg: #0369a1;
+  --pz-grid: #e2e5ec;
+  --pz-overlay: rgba(0, 0, 0, 0.6);
+}
+[data-theme='dark'] {
+  --pz-yellow-bg: rgba(250, 204, 21, 0.14); --pz-yellow-bd: rgba(250, 204, 21, 0.4); --pz-yellow-fg: #fde047; --pz-yellow-soft: rgba(250, 204, 21, 0.08); --pz-yellow-ink: #fde68a;
+  --pz-amber-bg: rgba(245, 158, 11, 0.16); --pz-amber-fg: #fbbf24; --pz-amber-fg2: #fbbf24;
+  --pz-green-bg: rgba(52, 211, 153, 0.14); --pz-green-soft: rgba(52, 211, 153, 0.08); --pz-green-bd: rgba(52, 211, 153, 0.4); --pz-green-fg: #34d399; --pz-green-chip: #34d399;
+  --pz-red-bg: rgba(248, 113, 113, 0.15); --pz-red-fg: #f87171; --pz-red-chip: #f87171;
+  --pz-rose-bg: rgba(251, 113, 133, 0.12); --pz-rose-bd: rgba(251, 113, 133, 0.4); --pz-rose-fg: #fb7185;
+  --pz-blue-bg: rgba(96, 165, 250, 0.14); --pz-blue-bd: rgba(96, 165, 250, 0.4); --pz-blue-fg: #93c5fd; --pz-blue-chip: #60a5fa;
+  --pz-gray-bg: #1c1c1c; --pz-gray-fg: #a1a1a1; --pz-gray-mute: #6b7280;
+  --pz-body: #d4d4d4;
+  --pz-violet-bg: rgba(167, 139, 250, 0.16); --pz-violet-fg: #c4b5fd;
+  --pz-teal-bg: rgba(45, 212, 191, 0.14); --pz-teal-fg: #5eead4;
+  --pz-sky-bg: rgba(56, 189, 248, 0.14); --pz-sky-fg: #7dd3fc;
+  --pz-grid: #262626;
+  --pz-overlay: rgba(0, 0, 0, 0.8);
+}
