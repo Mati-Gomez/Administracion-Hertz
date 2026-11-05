@@ -21,20 +21,24 @@
 :root {
   color-scheme: light;
 
-  /* Marca — extraído del isologo de Grupo Randazzo */
-  --brand: #d9ff50;
-  --brand-hover: #c7ec3f;
-  --brand-ink: #14170a; /* texto oscuro para usar sobre fondo lima */
-  --brand-dim: rgba(217, 255, 80, 0.14);
+  /* Marca — Amarillo Hertz Oficial */
+  --brand: #ffd100;
+  --brand-hover: #e6bc00;
+  --brand-ink: #0d0d0d; /* Negro carbón sobre fondo amarillo */
+  --brand-dim: rgba(255, 209, 0, 0.16);
 
-  /* Navy — tono del fondo del logo, usado en sidebar/login */
+  /* En modo claro, el amarillo puro sobre blanco no se lee como texto: usamos un ocre/oro oscuro */
+  --brand-fg: #947600;
+  --brand-soft: rgba(255, 209, 0, 0.22);
+
+  /* Carbon / Negro Hertz para Sidebar y Login */
   --navy: #0d0d0d;
   --navy-2: #161616;
-  --navy-hover: #1e1e1e;
+  --navy-hover: #222222;
 
-  /* Semánticos (sin tocar valores del dashboard) */
+  /* Semánticos — Corremos amber a naranja para que no compita con el amarillo Hertz */
   --green: #00a651;
-  --amber: #d97706;
+  --amber: #ea580c;
   --red: #dc2626;
   --blue: #2563eb;
 
@@ -46,25 +50,50 @@
   --text: #0f172a;
   --text-2: #64748b;
 
-  /* El lima de la marca usado COMO TEXTO o línea: más oscuro para que se lea sobre fondo claro */
-  --brand-fg: #586300;
-  --brand-soft: rgba(217, 255, 80, 0.22);
   --text-red: #b91c1c;
-  --text-amber: #b45309;
+  --text-amber: #c2410c;
   --text-green: #047857;
 
-  /* Motivos de las multas de logística (gráfico apilado) */
-  --us-m0: #d5e14d;
+  /* Escala para gráficos apilados (Amarillo Hertz + Grises carbón) */
+  --us-m0: #ffd100;
   --us-m1: #9ca3af;
-  --us-m2: #8a9a1a;
+  --us-m2: #cca700;
   --us-m3: #e5e7eb;
-  --us-m4: #4b5563;
+  --us-m4: #374151;
   --us-m5: #6b7280;
 
   --r: 8px;
   --r-lg: 12px;
   --shadow: 0 1px 4px rgba(0, 0, 0, 0.07), 0 4px 12px rgba(0, 0, 0, 0.05);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #0c0c0c;
+  --surface-2: #151515;
+  --border: #262626;
+  --text: #f2f2f2;
+  --text-2: #a1a1a1;
+  --navy: #000000;
+  --navy-2: #080808;
+  --navy-hover: #161616;
+
+  /* En oscuro el amarillo Hertz brilla impecable como texto y acento */
+  --brand: #ffd100;
+  --brand-hover: #e6bc00;
+  --brand-ink: #000000;
+  --brand-dim: rgba(255, 209, 0, 0.14);
+  --brand-soft: rgba(255, 209, 0, 0.08);
+  --brand-fg: #ffd100;
+
+  --text-red: #f87171;
+  --text-amber: #fb923c;
+  --text-green: #34d399;
+
+  --shadow: 0 0 0 1px #1c1c1c;
+  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.8);
 }
 
 
